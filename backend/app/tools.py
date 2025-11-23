@@ -25,7 +25,7 @@ def get_data_summary(file_path: str) -> str:
         info_str = buffer.getvalue()
         
         # Get sample data
-        head_str = df.head(10).to_string()
+        head_str = df.head(5).to_string()
         
         # Get statistical summary for numeric columns
         numeric_summary = ""
@@ -36,7 +36,7 @@ def get_data_summary(file_path: str) -> str:
         return f"""TECHNICAL DATA OVERVIEW:
                 {info_str}
 
-                SAMPLE DATA (First 10 rows):
+                SAMPLE DATA (First 5 rows):
                 {head_str}
 
                 {f'STATISTICAL SUMMARY:{chr(10)}{numeric_summary}' if numeric_summary else ''}"""
@@ -276,7 +276,15 @@ def execute_python_code(code: str, file_path: str, session_id: str = None) -> di
         # Determine appropriate output message
         if not output.strip():
             if plotly_figures:
-                output = f"📊 {len(plotly_figures)} interactive visualization(s) generated!"
+                descriptions = []
+                for fig in plotly_figures:
+                    insight = fig.get('insight', {})
+                    title = insight.get('title', 'Visualization')
+                    # Use key finding as the primary description, fallback to details
+                    desc = insight.get('key_finding') or insight.get('details') or 'Interactive plot.'
+                    descriptions.append(f"**{title}**: {desc}")
+                
+                output = "📊 **Generated Visualizations:**\n" + "\n".join(f"- {d}" for d in descriptions)
             elif image_data:
                 output = "📊 Visualization generated successfully!"
             else:

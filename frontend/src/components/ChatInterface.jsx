@@ -94,13 +94,13 @@ export default function ChatInterface({ fileId, filename }) {
   }
 
   return (
-    <div className="flex flex-col h-[700px] glass rounded-2xl shadow-2xl overflow-hidden relative">
+    <div className="flex flex-col h-[700px] glass rounded-2xl shadow-2xl overflow-hidden relative border border-gold-500/20">
       {showSuccess && (
         <div
           className="absolute top-4 left-1/2 z-50 success-banner"
           style={{ transform: 'translateX(-50%)' }}
         >
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 animate-bounce">
+          <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 animate-bounce border border-green-400/30">
             <svg
               className="w-6 h-6"
               fill="none"
@@ -119,18 +119,21 @@ export default function ChatInterface({ fileId, filename }) {
         </div>
       )}
 
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4">
-        <h2 className="text-white font-bold text-lg">Data Analysis Chat</h2>
-        <p className="text-purple-100 text-sm">File: {filename}</p>
+      <div className="bg-zinc-900 border-b border-gold-500/20 px-6 py-4 flex justify-between items-center">
+        <div>
+          <h2 className="text-gold-400 font-bold text-lg">Data Analysis Chat</h2>
+          <p className="text-zinc-500 text-sm">File: {filename}</p>
+        </div>
+        <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-white">
+      <div className="flex-1 overflow-y-auto p-6 bg-zinc-950 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
         {isAnalyzing && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="glass border-2 border-purple-300 rounded-2xl p-8 max-w-md text-center shadow-xl">
+            <div className="glass border border-gold-500/30 rounded-2xl p-8 max-w-md text-center shadow-[0_0_30px_rgba(255,193,7,0.05)]">
               <div className="pulse-icon mb-4">
                 <svg
-                  className="w-16 h-16 text-purple-600 mx-auto"
+                  className="w-16 h-16 text-gold-500 mx-auto"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -138,28 +141,28 @@ export default function ChatInterface({ fileId, filename }) {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={1.5}
                     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                   />
                 </svg>
               </div>
-              <p className="text-xl font-bold text-purple-700 mb-2">
+              <p className="text-xl font-bold text-gold-400 mb-2">
                 Analyzing Your Data
               </p>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-zinc-400 mb-4">
                 Generating intelligent insights...
               </p>
               <div className="flex items-center justify-center space-x-2">
                 <div
-                  className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-gold-500 rounded-full animate-bounce"
                   style={{ animationDelay: '0s' }}
                 ></div>
                 <div
-                  className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-gold-500 rounded-full animate-bounce"
                   style={{ animationDelay: '0.2s' }}
                 ></div>
                 <div
-                  className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-gold-500 rounded-full animate-bounce"
                   style={{ animationDelay: '0.4s' }}
                 ></div>
               </div>
@@ -173,12 +176,12 @@ export default function ChatInterface({ fileId, filename }) {
 
         {loading && (
           <div className="flex justify-start mb-4">
-            <div className="glass border-l-4 border-purple-500 rounded-xl p-4 max-w-md">
-              <p className="font-bold text-purple-600 mb-2 flex items-center">
+            <div className="bg-zinc-900 border-l-2 border-gold-500 rounded-r-xl rounded-bl-xl p-4 max-w-md shadow-lg">
+              <p className="font-bold text-gold-500 mb-2 flex items-center text-xs uppercase tracking-wider">
                 <span className="animate-pulse mr-2">●</span>
                 Agent Processing
               </p>
-              <div className="text-sm text-gray-600 font-mono space-y-1">
+              <div className="text-sm text-zinc-400 font-mono space-y-1">
                 {logs.map((log, idx) => (
                   <div key={idx} className="animate-pulse">
                     ▸ {log}
@@ -192,7 +195,7 @@ export default function ChatInterface({ fileId, filename }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-5 bg-white border-t border-gray-200">
+      <div className="p-5 bg-zinc-900 border-t border-gold-500/20">
         <div className="flex space-x-3">
           <input
             type="text"
@@ -200,13 +203,13 @@ export default function ChatInterface({ fileId, filename }) {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask a question about your data..."
-            className="flex-1 px-5 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
+            className="flex-1 px-5 py-3 rounded-xl bg-zinc-950 border border-zinc-700 text-zinc-200 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/50 transition-all placeholder-zinc-600"
             disabled={loading || isAnalyzing}
           />
           <button
             onClick={sendMessage}
             disabled={loading || isAnalyzing}
-            className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-3 bg-gradient-to-r from-gold-600 to-gold-500 text-black font-bold rounded-xl hover:shadow-[0_0_15px_rgba(255,193,7,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           >
             Send
           </button>

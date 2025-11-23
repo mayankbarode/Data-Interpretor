@@ -96,13 +96,13 @@ export default function PlotCarousel({ plots }) {
     }, [plot.html])
 
     return (
-        <div className="mt-4 glass rounded-xl overflow-hidden border-2 border-purple-200 shadow-lg">
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 flex justify-between items-center">
-                <h3 className="text-white font-bold text-lg">
+        <div className="mt-4 glass rounded-xl overflow-hidden border border-gold-500/20 shadow-lg">
+            <div className="bg-zinc-900 border-b border-gold-500/20 px-6 py-3 flex justify-between items-center">
+                <h3 className="text-gold-400 font-bold text-lg">
                     {plot.insight?.title || 'Visualization'}
                 </h3>
                 {showNav && (
-                    <span className="text-purple-100 text-sm">
+                    <span className="text-zinc-500 text-sm">
                         {currentSlide + 1} / {plots.length}
                     </span>
                 )}
@@ -127,11 +127,11 @@ export default function PlotCarousel({ plots }) {
                     </div>
                 )}
 
-                <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
+                <div className="mt-6 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
                     <div className="mb-3">
                         <div className="flex items-start">
                             <svg
-                                className="w-5 h-5 text-purple-600 mt-0.5 mr-2 flex-shrink-0"
+                                className="w-5 h-5 text-gold-600 mt-0.5 mr-2 flex-shrink-0"
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                             >
@@ -142,17 +142,17 @@ export default function PlotCarousel({ plots }) {
                                 />
                             </svg>
                             <div>
-                                <p className="font-semibold text-purple-900 text-sm mb-1">
+                                <p className="font-semibold text-zinc-900 text-sm mb-1">
                                     Key Finding
                                 </p>
-                                <p className="text-gray-700 text-sm leading-relaxed">
+                                <p className="text-zinc-700 text-sm leading-relaxed">
                                     {plot.insight?.key_finding || 'Data insights'}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-purple-200">
-                        <p className="text-gray-600 text-sm leading-relaxed">
+                    <div className="mt-3 pt-3 border-t border-zinc-200">
+                        <p className="text-zinc-600 text-sm leading-relaxed">
                             {plot.insight?.details || 'Analysis of the visualization.'}
                         </p>
                     </div>
@@ -160,10 +160,10 @@ export default function PlotCarousel({ plots }) {
             </div>
 
             {showNav && (
-                <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200">
+                <div className="bg-zinc-900 px-6 py-4 flex justify-between items-center border-t border-gold-500/20">
                     <button
                         onClick={prevSlide}
-                        className="flex items-center space-x-2 px-4 py-2 bg-white border-2 border-purple-300 text-purple-700 rounded-lg font-semibold hover:bg-purple-50 transition-all"
+                        className="flex items-center space-x-2 px-4 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-lg font-semibold hover:bg-zinc-700 hover:text-white transition-all"
                     >
                         <svg
                             className="w-5 h-5"
@@ -185,14 +185,14 @@ export default function PlotCarousel({ plots }) {
                             <button
                                 key={idx}
                                 onClick={() => setCurrentSlide(idx)}
-                                className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-purple-600 w-8' : 'bg-purple-300'
+                                className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-gold-500 w-8' : 'bg-zinc-700'
                                     }`}
                             />
                         ))}
                     </div>
                     <button
                         onClick={nextSlide}
-                        className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                        className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-500 text-black rounded-lg font-semibold hover:shadow-[0_0_15px_rgba(255,193,7,0.3)] transition-all"
                     >
                         <span>Next</span>
                         <svg

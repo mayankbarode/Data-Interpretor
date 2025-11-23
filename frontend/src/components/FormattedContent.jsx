@@ -15,7 +15,7 @@ export default function FormattedContent({ content }) {
                 )
             }
             parts.push(
-                <strong key={key++} className="font-bold text-gray-900">
+                <strong key={key++} className="font-bold text-gold-400">
                     {match[1]}
                 </strong>
             )
@@ -54,29 +54,29 @@ export default function FormattedContent({ content }) {
         return {
             element: (
                 <div className="overflow-x-auto my-4">
-                    <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-                        <thead className="bg-gradient-to-r from-purple-50 to-blue-50">
+                    <table className="min-w-full border border-gold-500/20 rounded-lg overflow-hidden shadow-sm">
+                        <thead className="bg-zinc-900 border-b border-gold-500/20">
                             <tr>
                                 {headers.map((header, i) => (
                                     <th
                                         key={i}
-                                        className="border-b-2 border-purple-200 px-4 py-3 text-left text-sm font-bold text-gray-700"
+                                        className="px-4 py-3 text-left text-sm font-bold text-gold-400"
                                     >
                                         {header}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="bg-zinc-950">
                             {rows.map((row, i) => (
                                 <tr
                                     key={i}
-                                    className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                    className={i % 2 === 0 ? 'bg-zinc-900/50' : 'bg-zinc-950'}
                                 >
                                     {row.map((cell, j) => (
                                         <td
                                             key={j}
-                                            className="border-b border-gray-200 px-4 py-2 text-sm text-gray-800"
+                                            className="border-b border-zinc-800 px-4 py-2 text-sm text-zinc-300"
                                         >
                                             {cell}
                                         </td>
@@ -110,27 +110,27 @@ export default function FormattedContent({ content }) {
 
         if (trimmed.startsWith('### ')) {
             elements.push(
-                <h3 key={i} className="text-lg font-bold text-purple-700 mt-4 mb-2">
+                <h3 key={i} className="text-lg font-bold text-gold-400 mt-4 mb-2">
                     {parseBold(trimmed.slice(4))}
                 </h3>
             )
         } else if (trimmed.startsWith('## ')) {
             elements.push(
-                <h2 key={i} className="text-xl font-bold text-purple-800 mt-5 mb-3">
+                <h2 key={i} className="text-xl font-bold text-gold-500 mt-5 mb-3">
                     {parseBold(trimmed.slice(3))}
                 </h2>
             )
         } else if (trimmed.startsWith('# ')) {
             elements.push(
-                <h1 key={i} className="text-2xl font-bold text-purple-900">
+                <h1 key={i} className="text-2xl font-bold text-gold-500">
                     {parseBold(trimmed.slice(2))}
                 </h1>
             )
         } else if (trimmed.startsWith('- ')) {
             elements.push(
                 <div key={i} className="flex items-start ml-4 my-1">
-                    <span className="text-purple-600 mr-2 mt-1">●</span>
-                    <p className="text-gray-700 leading-relaxed flex-1">
+                    <span className="text-gold-500 mr-2 mt-1">●</span>
+                    <p className="text-zinc-300 leading-relaxed flex-1">
                         {parseBold(trimmed.slice(2))}
                     </p>
                 </div>
@@ -140,10 +140,10 @@ export default function FormattedContent({ content }) {
             if (match) {
                 elements.push(
                     <div key={i} className="flex items-start ml-4 my-1">
-                        <span className="text-purple-600 font-semibold mr-2 min-w-[24px]">
+                        <span className="text-gold-500 font-semibold mr-2 min-w-[24px]">
                             {match[1]}.
                         </span>
-                        <p className="text-gray-700 leading-relaxed flex-1">
+                        <p className="text-zinc-300 leading-relaxed flex-1">
                             {parseBold(match[2])}
                         </p>
                     </div>
@@ -153,7 +153,7 @@ export default function FormattedContent({ content }) {
             elements.push(<div key={i} className="h-2"></div>)
         } else {
             elements.push(
-                <p key={i} className="text-gray-700 leading-relaxed my-1">
+                <p key={i} className="text-zinc-300 leading-relaxed my-1">
                     {parseBold(line)}
                 </p>
             )

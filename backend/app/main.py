@@ -18,8 +18,6 @@ app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/o
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application is starting up...")
-    logger.info(f"OpenAI API Key present: {bool(settings.OPENAI_API_KEY)}")
-
 # Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
@@ -82,6 +80,20 @@ async def websocket_endpoint(websocket: WebSocket, file_id: str):
                     "type": "error",
                     "content": f"Error generating summary: {str(e)}"
                 })
+        else:
+            # Session exists, send the existing summary/last message to ensure frontend state is consistent
+            print(f"DEBUG: Session exists for file_id: {file_id}, sending last message.")
+            if state.get("messages"):
+                last_msg = state["messages"][-1]
+                content = last_msg.content if hasattr(last_msg, 'content') else str(last_msg)
+                # Only send if it looks like a summary or AI response
+                if "Summary" in content or "Analysis" in content or len(state["messages"]) == 1:
+                     await websocket.send_json({
+                        "type": "result",
+                        "content": content,
+                        "image": state.get("image_path"),
+                        "plotly_figures": state.get("plotly_html", [])
+                    })
 
         print(f"DEBUG: Session ready. Waiting for messages...")
         while True:

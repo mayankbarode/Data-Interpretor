@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "LangGraph Agentic App"
     API_V1_STR: str = "/api/v1"
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    print("OPENAI_API_KEY: ", OPENAI_API_KEY)
+
     UPLOAD_DIR: str = os.path.join(os.getcwd(), "uploads")
 
     class Config:

@@ -11,8 +11,8 @@ export default function ChatMessage({ message }) {
         >
             <div
                 className={`max-w-[85%] rounded-2xl p-5 ${isUser
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                        : 'glass border border-gray-200'
+                    ? 'bg-zinc-800 text-zinc-100 shadow-lg border border-zinc-700'
+                    : 'bg-zinc-900 border border-gold-500/20 shadow-md'
                     }`}
             >
                 {isUser ? (
@@ -26,7 +26,7 @@ export default function ChatMessage({ message }) {
                 )}
 
                 {message.image && (
-                    <div className="mt-4 rounded-xl overflow-hidden border-2 border-purple-200 bg-white p-3 shadow-md">
+                    <div className="mt-4 rounded-xl overflow-hidden border border-gold-500/30 bg-white p-2 shadow-md">
                         <img
                             src={`data:image/png;base64,${message.image}`}
                             alt="Analysis Chart"

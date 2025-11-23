@@ -9,11 +9,11 @@ function App() {
         <div className="min-h-screen p-8">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-10 text-center">
-                    <h1 className="text-5xl font-bold text-white mb-3 drop-shadow-lg">
-                        🤖 Data Interpreter Agent
+                    <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gold-300 via-gold-500 to-gold-300 mb-3 drop-shadow-lg tracking-tight">
+                        Data Interpreter Agent
                     </h1>
-                    <p className="text-purple-100 text-lg">
-                        Upload your data and let AI analyze it for you
+                    <p className="text-zinc-400 text-lg font-light">
+                        Upload your data and let <span className="text-gold-400 font-medium">AI</span> analyze it for you
                     </p>
                 </header>
 
