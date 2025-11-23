@@ -1,0 +1,10 @@
+from pydantic import BaseModel
+from typing import List, Optional, Any
+
+class ChatRequest(BaseModel):
+    message: str
+    thread_id: str = "default"
+
+class ChatResponse(BaseModel):
+    response: str
+    history: List[Any] = []

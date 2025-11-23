@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangGraph Data Interpreter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        .success-banner {
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes pulse-scale {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .pulse-icon {
+            animation: pulse-scale 2s ease-in-out infinite;
+        }
+
+        .plotly-container {
+            min-height: 400px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const FormattedContent = ({ content }) => {
+            if (!content) return null;
+            const parseBold = (text) => {
+                const parts = [];
+                const boldRegex = /\*\*(.+?)\*\*/g;
+                let lastIndex = 0;
+                let match;
+                let key = 0;
+                while ((match = boldRegex.exec(text)) !== null) {
+                    if (match.index > lastIndex) {
+                        parts.push(<span key={key++}>{text.slice(lastIndex, match.index)}</span>);
+                    }
+                    parts.push(<strong key={key++} className="font-bold text-gray-900">{match[1]}</strong>);
+                    lastIndex = boldRegex.lastIndex;
+                }
+                if (lastIndex < text.length) {
+                    parts.push(<span key={key++}>{text.slice(lastIndex)}</span>);
+                }
+                return parts.length > 0 ? parts : text;
+            };
+
+            const renderTable = (lines, startIdx) => {
+                const tableLines = [];
+                let idx = startIdx;
+                while (idx < lines.length && lines[idx].includes('|')) {
+                    tableLines.push(lines[idx]);
+                    idx++;
+                }
+                if (tableLines.length < 2) return { element: null, nextIdx: startIdx };
+                const headers = tableLines[0].split('|').map(h => h.trim()).filter(h => h);
+                const rows = tableLines.slice(2).map(row =>
+                    row.split('|').map(cell => cell.trim()).filter(cell => cell)
+                );
+                return {
+                    element: (
+                        <div className="overflow-x-auto my-4">
+                            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                                <thead className="bg-gradient-to-r from-purple-50 to-blue-50">
+                                    <tr>
+                                        {headers.map((header, i) => (
+                                            <th key={i} className="border-b-2 border-purple-200 px-4 py-3 text-left text-sm font-bold text-gray-700">{header}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {rows.map((row, i) => (
+                                        <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                            {row.map((cell, j) => (
+                                                <td key={j} className="border-b border-gray-200 px-4 py-2 text-sm text-gray-800">{cell}</td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ),
+                    nextIdx: idx
+                };
+            };
+
+            const lines = content.split('\n');
+            const elements = [];
+            let i = 0;
+            while (i < lines.length) {
+                const line = lines[i];
+                const trimmed = line.trim();
+                if (line.includes('|') && line.split('|').length > 2) {
+                    const { element, nextIdx } = renderTable(lines, i);
+                    if (element) {
+                        elements.push(<div key={`table-${i}`}>{element}</div>);
+                        i = nextIdx;
+                        continue;
+                    }
+                }
+                if (trimmed.startsWith('### ')) {
+                    elements.push(<h3 key={i} className="text-lg font-bold text-purple-700 mt-4 mb-2">{parseBold(trimmed.slice(4))}</h3>);
+                } else if (trimmed.startsWith('## ')) {
+                    elements.push(<h2 key={i} className="text-xl font-bold text-purple-800 mt-5 mb-3">{parseBold(trimmed.slice(3))}</h2>);
+                } else if (trimmed.startsWith('# ')) {
+                    elements.push(<h1 key={i} className="text-2xl font-bold text-purple-900">{parseBold(trimmed.slice(2))}</h1>);
+                } else if (trimmed.startsWith('- ')) {
+                    elements.push(<div key={i} className="flex items-start ml-4 my-1"><span className="text-purple-600 mr-2 mt-1">●</span><p className="text-gray-700 leading-relaxed flex-1">{parseBold(trimmed.slice(2))}</p></div>);
+                } else if (trimmed.match(/^\d+\.\s/)) {
+                    const match = trimmed.match(/^(\d+)\.\s(.+)$/);
+                    if (match) {
+                        elements.push(<div key={i} className="flex items-start ml-4 my-1"><span className="text-purple-600 font-semibold mr-2 min-w-[24px]">{match[1]}.</span><p className="text-gray-700 leading-relaxed flex-1">{parseBold(match[2])}</p></div>);
+                    }
+                } else if (trimmed === '') {
+                    elements.push(<div key={i} className="h-2"></div>);
+                } else {
+                    elements.push(<p key={i} className="text-gray-700 leading-relaxed my-1">{parseBold(line)}</p>);
+                }
+                i++;
+            }
+            return <div className="space-y-0.5">{elements}</div>;
+        };
+
+        const FileUpload = ({ onUploadSuccess }) => {
+            const [uploading, setUploading] = useState(false);
+            const [error, setError] = useState(null);
+            const handleFileChange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const formData = new FormData();
+                formData.append("file", file);
+                setUploading(true);
+                setError(null);
+                try {
+                    const response = await axios.post("/api/v1/upload", formData, {
+                        headers: { "Content-Type": "multipart/form-data" }
+                    });
+                    onUploadSuccess(response.data);
+                } catch (err) {
+                    setError("Upload failed. Please try again.");
+                    console.error(err);
+                } finally {
+                    setUploading(false);
+                }
+            };
+            return (
+                <div className="p-8 border-2 border-dashed border-purple-300 rounded-2xl glass hover:shadow-2xl transition-all text-center cursor-pointer relative">
+                    <input type="file" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".csv,.xlsx,.xls" />
+                    <div className="flex flex-col items-center space-y-4">
+                        <i data-lucide="upload-cloud" className="w-16 h-16 text-purple-600"></i>
+                        <div>
+                            <p className="text-xl font-semibold text-gray-800 mb-2">{uploading ? "Uploading..." : "Drop your data file here"}</p>
+                            <p className="text-sm text-gray-500">Supports CSV, Excel (XLSX, XLS)</p>
+                        </div>
+                        {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+                    </div>
+                </div>
+            );
+        };
+
+        const PlotCarousel = ({ plots }) => {
+            const [currentSlide, setCurrentSlide] = useState(0);
+
+            if (!plots || plots.length === 0) return null;
+
+            const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % plots.length);
+            const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + plots.length) % plots.length);
+
+            const plot = plots[currentSlide];
+            const showNav = plots.length > 1;
+
+            return (
+                <div className="mt-4 glass rounded-xl overflow-hidden border-2 border-purple-200 shadow-lg">
+                    <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 flex justify-between items-center">
+                        <h3 className="text-white font-bold text-lg">{plot.insight?.title || 'Visualization'}</h3>
+                        {showNav && (
+                            <span className="text-purple-100 text-sm">{currentSlide + 1} / {plots.length}</span>
+                        )}
+                    </div>
+
+                    <div className="bg-white p-4">
+                        <div
+                            dangerouslySetInnerHTML={{ __html: plot.html }}
+                            className="plotly-container"
+                        />
+
+                        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
+                            <div className="mb-3">
+                                <div className="flex items-start">
+                                    <svg className="w-5 h-5 text-purple-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p className="font-semibold text-purple-900 text-sm mb-1">Key Finding</p>
+                                        <p className="text-gray-700 text-sm leading-relaxed">{plot.insight?.key_finding || 'Data insights'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-purple-200">
+                                <p className="text-gray-600 text-sm leading-relaxed">{plot.insight?.details || 'Analysis of the visualization.'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {showNav && (
+                        <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200">
+                            <button
+                                onClick={prevSlide}
+                                className="flex items-center space-x-2 px-4 py-2 bg-white border-2 border-purple-300 text-purple-700 rounded-lg font-semibold hover:bg-purple-50 transition-all"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                                <span>Previous</span>
+                            </button>
+                            <div className="flex space-x-2">
+                                {plots.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setCurrentSlide(idx)}
+                                        className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-purple-600 w-8' : 'bg-purple-300'
+                                            }`}
+                                    />
+                                ))}
+                            </div>
+                            <button
+                                onClick={nextSlide}
+                                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                            >
+                                <span>Next</span>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const ChatMessage = ({ message }) => {
+            const isUser = message.type === 'user';
+            return (
+                <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+                    <div className={`max-w-[85%] rounded-2xl p-5 ${isUser ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg' : 'glass border border-gray-200'}`}>
+                        {isUser ? (<p className="whitespace-pre-wrap">{message.content}</p>) : (<FormattedContent content={message.content} />)}
+                        {message.plotly_figures && message.plotly_figures.length > 0 && (
+                            <PlotCarousel plots={message.plotly_figures} />
+                        )}
+                        {message.image && (<div className="mt-4 rounded-xl overflow-hidden border-2 border-purple-200 bg-white p-3 shadow-md"><img src={`data:image/png;base64,${message.image}`} alt="Analysis Chart" className="w-full rounded-lg" /></div>)}
+                    </div>
+                </div>
+            );
+        };
+
+        const ChatInterface = ({ fileId, filename }) => {
+            const [messages, setMessages] = useState([]);
+            const [input, setInput] = useState("");
+            const [loading, setLoading] = useState(false);
+            const [logs, setLogs] = useState([]);
+            const [showSuccess, setShowSuccess] = useState(true);
+            const [isAnalyzing, setIsAnalyzing] = useState(true);
+            const messagesEndRef = useRef(null);
+            const wsRef = useRef(null);
+
+            const scrollToBottom = () => {
+                if (messagesEndRef.current) {
+                    messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+                }
+            };
+
+            useEffect(scrollToBottom, [messages, logs]);
+
+            useEffect(() => {
+                setTimeout(() => setShowSuccess(false), 2500);
+            }, []);
+
+            useEffect(() => {
+                let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                let host = window.location.host;
+                if (window.location.protocol === 'file:') {
+                    protocol = 'ws:';
+                    host = '127.0.0.1:8001';
+                }
+                const ws = new WebSocket(`${protocol}//${host}/ws/${fileId}`);
+                ws.onopen = () => setLogs(prev => [...prev, "Connected"]);
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'log') {
+                        setLogs(prev => [...prev, data.message]);
+                    } else if (data.type === 'result') {
+                        setMessages(prev => [...prev, {
+                            type: 'agent',
+                            content: data.content,
+                            image: data.image,
+                            plotly_figures: data.plotly_figures || []
+                        }]);
+                        setLoading(false);
+                        setIsAnalyzing(false);
+                        setLogs([]);
+                    } else if (data.type === 'error') {
+                        setMessages(prev => [...prev, { type: 'agent', content: `❌ Error: ${data.content}` }]);
+                        setLoading(false);
+                        setIsAnalyzing(false);
+                        setLogs([]);
+                    }
+                };
+                ws.onclose = () => console.log("Disconnected");
+                wsRef.current = ws;
+                return () => ws.close();
+            }, [fileId]);
+
+            const sendMessage = () => {
+                if (!input.trim() || loading) return;
+                const userMsg = { type: 'user', content: input };
+                setMessages(prev => [...prev, userMsg]);
+                setInput("");
+                setLoading(true);
+                setLogs(["Processing..."]);
+                if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                    wsRef.current.send(JSON.stringify({ message: userMsg.content }));
+                } else {
+                    setMessages(prev => [...prev, { type: 'agent', content: "❌ WebSocket not connected" }]);
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="flex flex-col h-[700px] glass rounded-2xl shadow-2xl overflow-hidden relative">
+                    {showSuccess && (
+                        <div className="absolute top-4 left-1/2 z-50 success-banner" style={{ transform: 'translateX(-50%)' }}>
+                            <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 animate-bounce">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                <span className="font-bold">✨ Data Loaded Successfully!</span>
+                            </div>
+                        </div>
+                    )}
+                    <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4">
+                        <h2 className="text-white font-bold text-lg">Data Analysis Chat</h2>
+                        <p className="text-purple-100 text-sm">File: {filename}</p>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-white">
+                        {isAnalyzing && messages.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-full">
+                                <div className="glass border-2 border-purple-300 rounded-2xl p-8 max-w-md text-center shadow-xl">
+                                    <div className="pulse-icon mb-4">
+                                        <svg className="w-16 h-16 text-purple-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-xl font-bold text-purple-700 mb-2">Analyzing Your Data</p>
+                                    <p className="text-sm text-gray-600 mb-4">Generating intelligent insights...</p>
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {messages.map((msg, idx) => (<ChatMessage key={idx} message={msg} />))}
+                        {loading && (
+                            <div className="flex justify-start mb-4">
+                                <div className="glass border-l-4 border-purple-500 rounded-xl p-4 max-w-md">
+                                    <p className="font-bold text-purple-600 mb-2 flex items-center"><span className="animate-pulse mr-2">●</span>Agent Processing</p>
+                                    <div className="text-sm text-gray-600 font-mono space-y-1">{logs.map((log, idx) => (<div key={idx} className="animate-pulse">▸ {log}</div>))}</div>
+                                </div>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+                    <div className="p-5 bg-white border-t border-gray-200">
+                        <div className="flex space-x-3">
+                            <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && sendMessage()} placeholder="Ask a question about your data..." className="flex-1 px-5 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all" disabled={loading || isAnalyzing} />
+                            <button onClick={sendMessage} disabled={loading || isAnalyzing} className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">Send</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [session, setSession] = useState(null);
+            useEffect(() => {
+                lucide.createIcons();
+            }, [session]);
+            return (
+                <div className="min-h-screen p-8">
+                    <div className="max-w-6xl mx-auto">
+                        <header className="mb-10 text-center">
+                            <h1 className="text-5xl font-bold text-white mb-3 drop-shadow-lg">🤖 Data Interpreter Agent</h1>
+                            <p className="text-purple-100 text-lg">Upload your data and let AI analyze it for you</p>
+                        </header>
+                        {!session ? (<div className="max-w-2xl mx-auto"><FileUpload onUploadSuccess={setSession} /></div>) : (<ChatInterface fileId={session.file_id} filename={session.filename} />)}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
