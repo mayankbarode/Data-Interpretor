@@ -1,4 +1,4 @@
-# 📊 Data Interpreter
+# 📊 Data Interpretor
 
 An AI-powered data analysis application that allows users to upload datasets and interact with them through natural language queries. Built with FastAPI, LangChain/LangGraph, and React.
 
